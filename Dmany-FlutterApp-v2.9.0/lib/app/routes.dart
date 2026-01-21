@@ -23,6 +23,8 @@ import 'package:eClassify/ui/screens/item/add_item_screen/widgets/success_item_s
 import 'package:eClassify/ui/screens/item/item_list_screen/item_list_screen.dart';
 import 'package:eClassify/ui/screens/item/job_application/job_application_form.dart';
 import 'package:eClassify/ui/screens/item/job_application/job_application_list_screen.dart';
+import 'package:eClassify/ui/screens/item/inspection_warranty/inspection_warranty_screen.dart';
+import 'package:eClassify/ui/screens/item/inspection_warranty/inspection_warranty_track_screen.dart';
 import 'package:eClassify/ui/screens/item/my_items_screen.dart';
 import 'package:eClassify/ui/screens/location/location_screen.dart';
 import 'package:eClassify/ui/screens/location/widgets/location_map_picker.dart';
@@ -123,6 +125,10 @@ class Routes {
   static const String blockedUserListScreen = '/blockedUserListScreen';
   static const String jobApplicationForm = '/jobApplicationForm';
   static const String jobApplicationList = '/jobApplicationList';
+
+  /// Inspection & Warranty Routes
+  static const String inspectionWarrantyScreen = '/inspectionWarrantyScreen';
+  static const String inspectionWarrantyTrackScreen = '/inspectionWarrantyTrackScreen';
 
   /// Route tracking
   static String currentRoute = '';
@@ -291,6 +297,10 @@ class Routes {
         return SellerVerificationCompleteScreen.route(routeSettings);
       case myReviewsScreen:
         return MyReviewScreen.route(routeSettings);
+      case inspectionWarrantyScreen:
+        return InspectionWarrantyScreen.route(routeSettings);
+      case inspectionWarrantyTrackScreen:
+        return InspectionWarrantyTrackScreen.route(routeSettings);
       default:
         return _defaultRoute();
     }

@@ -1372,20 +1372,143 @@ class AdDetailsScreenState extends CloudState<AdDetailsScreen> {
                     );
                   }
                 },
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (model.category?.isJobCategory != 1 &&
-                        (model.category?.priceOptional != 1 &&
-                            model.price != null))
-                      if (chatedUser == null)
+                    // Existing Chat/Make Offer/Apply Now Row
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (model.category?.isJobCategory != 1 &&
+                            (model.category?.priceOptional != 1 &&
+                                model.price != null))
+                          if (chatedUser == null)
+                            Expanded(
+                              child: _buildButton(
+                                "makeAnOffer".translate(context),
+                                () {
+                                  UiUtils.checkUser(
+                                    onNotGuest: () {
+                                      safetyTipsBottomSheet();
+                                    },
+                                    context: context,
+                                  );
+                                },
+                                null,
+                                null,
+                              ),
+                            ),
+                        if (model.category?.isJobCategory == 1)
+                          if (itemJobApplied == null)
+                            Expanded(
+                              child: _buildButton(
+                                "applyNow".translate(context),
+                                () {
+                                  UiUtils.checkUser(
+                                    onNotGuest: () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        Routes.jobApplicationForm,
+                                        arguments: widget.model,
+                                      );
+                                    },
+                                    context: context,
+                                  );
+                                },
+                                null,
+                                null,
+                              ),
+                            ),
+                        if (chatedUser == null || itemJobApplied == null)
+                          SizedBox(width: 10),
                         Expanded(
                           child: _buildButton(
-                            "makeAnOffer".translate(context),
+                            "chat".translate(context),
                             () {
                               UiUtils.checkUser(
                                 onNotGuest: () {
-                                  safetyTipsBottomSheet();
+                                  if (chatedUser != null) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) {
+                                          return MultiBlocProvider(
+                                            providers: [
+                                              BlocProvider(
+                                                create: (context) =>
+                                                    SendMessageCubit(),
+                                              ),
+                                              BlocProvider(
+                                                create: (context) =>
+                                                    LoadChatMessagesCubit(),
+                                              ),
+                                              BlocProvider(
+                                                create: (context) =>
+                                                    DeleteMessageCubit(),
+                                              ),
+                                            ],
+                                            child: ChatScreen(
+                                              itemId: chatedUser.itemId.toString(),
+                                              profilePicture:
+                                                  chatedUser.seller != null &&
+                                                      chatedUser.seller!.profile !=
+                                                          null
+                                                  ? chatedUser.seller!.profile!
+                                                  : "",
+                                              userName:
+                                                  chatedUser.seller != null &&
+                                                      chatedUser.seller!.name !=
+                                                          null
+                                                  ? chatedUser.seller!.name!
+                                                  : "",
+                                              date: chatedUser.createdAt!,
+                                              itemOfferId: chatedUser.id!,
+                                              itemPrice:
+                                                  chatedUser.item != null &&
+                                                      chatedUser.item!.price != null
+                                                  ? chatedUser.item!.price
+                                                        .toString()
+                                                  : null,
+                                              itemOfferPrice:
+                                                  chatedUser.amount != null
+                                                  ? chatedUser.amount!
+                                                  : null,
+                                              itemImage:
+                                                  chatedUser.item != null &&
+                                                      chatedUser.item!.image != null
+                                                  ? chatedUser.item!.image!
+                                                  : "",
+                                              itemTitle:
+                                                  chatedUser.item != null &&
+                                                      chatedUser.item!.name != null
+                                                  ? chatedUser.item!.name!.localized
+                                                  : "",
+                                              userId: chatedUser.sellerId
+                                                  .toString(),
+                                              buyerId: chatedUser.buyerId
+                                                  .toString(),
+                                              status: chatedUser.item!.status,
+                                              from: "item",
+                                              isPurchased: model.isPurchased!,
+                                              alreadyReview: model.review == null
+                                                  ? false
+                                                  : model.review!.isEmpty
+                                                  ? false
+                                                  : true,
+                                              isFromBuyerList: true,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    );
+                                  } else {
+                                    context
+                                        .read<MakeAnOfferItemCubit>()
+                                        .makeAnOfferItem(
+                                          id: model.id!,
+                                          from: "chat",
+                                        );
+                                  }
                                 },
                                 context: context,
                               );
@@ -1394,125 +1517,88 @@ class AdDetailsScreenState extends CloudState<AdDetailsScreen> {
                             null,
                           ),
                         ),
-                    if (model.category?.isJobCategory == 1)
-                      if (itemJobApplied == null)
-                        Expanded(
-                          child: _buildButton(
-                            "applyNow".translate(context),
-                            () {
+                      ],
+                    ),
+                    // Inspection & Warranty Button - New Trust-Focused Feature
+                    // Shown for non-job categories with a price
+                    if (model.category?.isJobCategory != 1 &&
+                        (model.category?.priceOptional != 1 && model.price != null)) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [
+                              Color(0xFF2563EB), // Trust Blue
+                              Color(0xFF4F46E5), // Indigo
+                            ],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF2563EB).withOpacity(0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () {
                               UiUtils.checkUser(
                                 onNotGuest: () {
                                   Navigator.pushNamed(
                                     context,
-                                    Routes.jobApplicationForm,
-                                    arguments: widget.model,
+                                    Routes.inspectionWarrantyScreen,
+                                    arguments: {
+                                      'itemId': model.id,
+                                      'itemModel': model,
+                                    },
                                   );
                                 },
                                 context: context,
                               );
                             },
-                            null,
-                            null,
+                            borderRadius: BorderRadius.circular(12),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.verified_user,
+                                    color: Colors.white,
+                                    size: 22,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: CustomText(
+                                      "Inspection & 5-Day Warranty",
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
-                    if (chatedUser == null || itemJobApplied == null)
-                      SizedBox(width: 10),
-                    Expanded(
-                      child: _buildButton(
-                        "chat".translate(context),
-                        () {
-                          UiUtils.checkUser(
-                            onNotGuest: () {
-                              if (chatedUser != null) {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) {
-                                      return MultiBlocProvider(
-                                        providers: [
-                                          BlocProvider(
-                                            create: (context) =>
-                                                SendMessageCubit(),
-                                          ),
-                                          BlocProvider(
-                                            create: (context) =>
-                                                LoadChatMessagesCubit(),
-                                          ),
-                                          BlocProvider(
-                                            create: (context) =>
-                                                DeleteMessageCubit(),
-                                          ),
-                                        ],
-                                        child: ChatScreen(
-                                          itemId: chatedUser.itemId.toString(),
-                                          profilePicture:
-                                              chatedUser.seller != null &&
-                                                  chatedUser.seller!.profile !=
-                                                      null
-                                              ? chatedUser.seller!.profile!
-                                              : "",
-                                          userName:
-                                              chatedUser.seller != null &&
-                                                  chatedUser.seller!.name !=
-                                                      null
-                                              ? chatedUser.seller!.name!
-                                              : "",
-                                          date: chatedUser.createdAt!,
-                                          itemOfferId: chatedUser.id!,
-                                          itemPrice:
-                                              chatedUser.item != null &&
-                                                  chatedUser.item!.price != null
-                                              ? chatedUser.item!.price
-                                                    .toString()
-                                              : null,
-                                          itemOfferPrice:
-                                              chatedUser.amount != null
-                                              ? chatedUser.amount!
-                                              : null,
-                                          itemImage:
-                                              chatedUser.item != null &&
-                                                  chatedUser.item!.image != null
-                                              ? chatedUser.item!.image!
-                                              : "",
-                                          itemTitle:
-                                              chatedUser.item != null &&
-                                                  chatedUser.item!.name != null
-                                              ? chatedUser.item!.name!.localized
-                                              : "",
-                                          userId: chatedUser.sellerId
-                                              .toString(),
-                                          buyerId: chatedUser.buyerId
-                                              .toString(),
-                                          status: chatedUser.item!.status,
-                                          from: "item",
-                                          isPurchased: model.isPurchased!,
-                                          alreadyReview: model.review == null
-                                              ? false
-                                              : model.review!.isEmpty
-                                              ? false
-                                              : true,
-                                          isFromBuyerList: true,
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                );
-                              } else {
-                                context
-                                    .read<MakeAnOfferItemCubit>()
-                                    .makeAnOfferItem(
-                                      id: model.id!,
-                                      from: "chat",
-                                    );
-                              }
-                            },
-                            context: context,
-                          );
-                        },
-                        null,
-                        null,
                       ),
-                    ),
+                      const SizedBox(height: 6),
+                      CustomText(
+                        "Buy safely with professional inspection & 5-day warranty",
+                        color: context.color.textLightColor.withOpacity(0.7),
+                        fontSize: 11,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ],
                 ),
               );

@@ -1,23 +1,23 @@
 import 'package:eClassify/utils/ui_utils.dart';
 import 'package:flutter/material.dart';
 
-///Light Theme Colors
-///This color format is different, isn't it? .You can use hex colors here also but you have to remove '#' symbol and add 0xff instead.
-const Color primaryColor_ = Color(0xFFF6F5FA);
-const Color secondaryColor_ = Color(0xFFFFFFFF);
-const Color territoryColor_ = Color(0xFF00B2CA);
-const Color forthColor_ = Color(0xffFA6E53);
+///Light Theme Colors - Modern Trust-Focused Palette
+///Updated with modern, calm, professional colors
+const Color primaryColor_ = Color(0xFFFAFBFC); // Soft, modern background
+const Color secondaryColor_ = Color(0xFFFFFFFF); // Pure white cards
+const Color territoryColor_ = Color(0xFF2563EB); // Trust blue (replaces teal)
+const Color forthColor_ = Color(0xffFA6E53); // Keep for accent
 const Color _backgroundColor = primaryColor_; //here you can change if you need
-const Color textDarkColor = Color(0xFF000000);
-Color lightTextColor = const Color(0xFF000000).withValues(alpha: 0.5);
-Color widgetsBorderColorLight = const Color(0xffEEEEEE).withValues(alpha: 0.6);
+const Color textDarkColor = Color(0xFF111827); // Modern dark gray (was pure black)
+Color lightTextColor = const Color(0xFF6B7280).withValues(alpha: 1.0); // Modern gray
+Color widgetsBorderColorLight = const Color(0xFFE5E7EB).withValues(alpha: 1.0); // Soft border
 //Color senderChatColor = const Color.fromARGB(255, 233, 233, 233).withValues(22);
 
-///Dark Theme Colors
-Color primaryColorDark = const Color(0xff121212);
-Color secondaryColorDark = const Color(0xff1C1C1C);
-const Color territoryColorDark = Color(0xff00B2CA);
-Color deactivateColorLight = const Color(0xff7F7F7F);
+///Dark Theme Colors - Modern Trust-Focused Palette
+Color primaryColorDark = const Color(0xFF0F172A); // Modern dark blue-gray
+Color secondaryColorDark = const Color(0xFF1E293B); // Card background
+const Color territoryColorDark = Color(0xFF3B82F6); // Lighter trust blue for dark mode
+Color deactivateColorLight = const Color(0xFF6B7280); // Modern gray
 
 const Color forthColorDark = Color(0xffFA6E53);
 Color backgroundColorDark = primaryColorDark; //here you can change if you need

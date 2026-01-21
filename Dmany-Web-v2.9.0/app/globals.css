@@ -47,11 +47,19 @@
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-  }
+      --chart-5: 27 87% 67%;
+      --radius: 0.5rem;
+      
+      /* Trust & Safety Colors */
+      --trust-primary: #2563eb;
+      --trust-secondary: #10b981;
+      --trust-gradient-start: #667eea;
+      --trust-gradient-end: #764ba2;
+      --warranty-badge: #10b981;
+      --inspection-blue: #3b82f6;
+    }
 
-  .dark {
+    .dark {
     --background: 0 0% 3.9%;
     --foreground: 0 0% 98%;
     --card: 0 0% 3.9%;
@@ -170,13 +178,95 @@
   }
 
   /* Hide scrollbar for IE, Edge, and Firefox */
-  .scrollbar-none {
-    -ms-overflow-style: none;
-    /* IE and Edge */
-    scrollbar-width: none;
-    /* Firefox */
-  }
-}
+      .scrollbar-none {
+        -ms-overflow-style: none;
+        /* IE and Edge */
+        scrollbar-width: none;
+        /* Firefox */
+      }
+
+      /* Modern Trust-Driven Animations */
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @keyframes slideInRight {
+        from {
+          opacity: 0;
+          transform: translateX(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      @keyframes pulse {
+        0%, 100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      @keyframes shimmer {
+        0% {
+          background-position: -1000px 0;
+        }
+        100% {
+          background-position: 1000px 0;
+        }
+      }
+
+      .animate-fadeInUp {
+        animation: fadeInUp 0.5s ease-out;
+      }
+
+      .animate-fadeIn {
+        animation: fadeIn 0.4s ease-out;
+      }
+
+      .animate-slideInRight {
+        animation: slideInRight 0.4s ease-out;
+      }
+
+      /* Smooth transitions for buttons */
+      .btn-trust {
+        @apply transition-all duration-300 ease-in-out;
+        @apply hover:shadow-lg hover:scale-[1.02] active:scale-[0.98];
+      }
+
+      /* Trust gradient backgrounds */
+      .bg-trust-gradient {
+        background: linear-gradient(135deg, var(--trust-gradient-start) 0%, var(--trust-gradient-end) 100%);
+      }
+
+      /* Soft glow effect for trust elements */
+      .trust-glow {
+        box-shadow: 0 0 20px rgba(37, 99, 235, 0.15);
+      }
+
+      .trust-glow-hover:hover {
+        box-shadow: 0 0 30px rgba(37, 99, 235, 0.25);
+      }
+    }
 
 /* .place_search div {
   width: 100%;

@@ -66,6 +66,14 @@ export const GET_USER_INFO = "get-user-info";
 export const LOGOUT = "logout";
 export const SET_ITEM_TOTAL_CLICK = "set-item-total-click";
 
+// Inspection & Warranty API Endpoints
+export const GET_INSPECTION_CONFIG = "get-inspection-config";
+export const GET_INSPECTION_ORDER = "get-inspection-order";
+export const CREATE_INSPECTION_ORDER = "create-inspection-order";
+export const GET_INSPECTION_REPORT = "get-inspection-report";
+export const GET_WARRANTY_CLAIMS = "get-warranty-claims";
+export const CREATE_WARRANTY_CLAIM = "create-warranty-claim";
+
 // 1. SETTINGS API
 export const settingsApi = {
   getSettings: ({ type } = {}) => {
@@ -1100,6 +1108,73 @@ export const setItemTotalClickApi = {
     if (item_id) formData.append("item_id", item_id);
 
     return Api.post(SET_ITEM_TOTAL_CLICK, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  },
+};
+
+// Inspection & Warranty API
+export const inspectionWarrantyApi = {
+  // Get inspection service configuration (fee percentage, warranty duration, terms, etc.)
+  getInspectionConfig: () => {
+    return Api.get(GET_INSPECTION_CONFIG);
+  },
+
+  // Get product details for inspection page
+  getProductDetails: ({ itemId, slug } = {}) => {
+    // Reuse existing get-item API with itemId or slug
+    return Api.get(GET_ITEM, {
+      params: { id: itemId, slug: slug },
+    });
+  },
+
+  // Get inspection order details
+  getInspectionOrder: ({ itemId, orderId } = {}) => {
+    return Api.get(GET_INSPECTION_ORDER, {
+      params: { item_id: itemId, order_id: orderId },
+    });
+  },
+
+  // Create new inspection order
+  createInspectionOrder: ({ item_id } = {}) => {
+    const formData = new FormData();
+    if (item_id) formData.append("item_id", item_id);
+
+    return Api.post(CREATE_INSPECTION_ORDER, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  },
+
+  // Get inspection report
+  getInspectionReport: ({ orderId } = {}) => {
+    return Api.get(GET_INSPECTION_REPORT, {
+      params: { order_id: orderId },
+    });
+  },
+
+  // Get warranty claims for a user
+  getWarrantyClaims: ({ page } = {}) => {
+    return Api.get(GET_WARRANTY_CLAIMS, {
+      params: { page },
+    });
+  },
+
+  // Create warranty claim
+  createWarrantyClaim: ({ order_id, description, images } = {}) => {
+    const formData = new FormData();
+    if (order_id) formData.append("order_id", order_id);
+    if (description) formData.append("description", description);
+    if (images && Array.isArray(images)) {
+      images.forEach((image, index) => {
+        formData.append(`images[${index}]`, image);
+      });
+    }
+
+    return Api.post(CREATE_WARRANTY_CLAIM, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },

@@ -11,7 +11,7 @@ import { BiPhoneCall } from "react-icons/bi";
 import { itemOfferApi } from "@/utils/api";
 import { toast } from "sonner";
 import { userSignUpData } from "@/redux/reducer/authSlice";
-import { Gift } from "lucide-react";
+import { Gift, ShieldCheck } from "lucide-react";
 import MakeOfferModal from "./MakeOfferModal";
 import { setIsLoginOpen } from "@/redux/reducer/globalStateSlice";
 import ApplyJobModal from "./ApplyJobModal";
@@ -71,6 +71,15 @@ const SellerDetailCard = ({ productDetails, setProductDetails }) => {
       return;
     }
     setIsOfferModalOpen(true);
+  };
+
+  const handleInspectionWarranty = () => {
+    if (!loggedInUserId) {
+      setIsLoginOpen(true);
+      return;
+    }
+    // Navigate to Inspection & Warranty page
+    navigate(`/inspection-warranty/${productDetails?.id}?slug=${productDetails?.slug}`);
   };
 
   return (
@@ -146,7 +155,7 @@ const SellerDetailCard = ({ productDetails, setProductDetails }) => {
           <button
             onClick={handleChat}
             disabled={IsStartingChat}
-            className="bg-[#000] text-white p-4 rounded-md flex items-center gap-2 text-base font-medium justify-center whitespace-nowrap [flex:1_1_47%]"
+            className="bg-[#000] text-white p-4 rounded-md flex items-center gap-2 text-base font-medium justify-center whitespace-nowrap [flex:1_1_47%] btn-trust"
           >
             <IoChatboxEllipsesOutline size={22} />
             {IsStartingChat ? (
@@ -160,7 +169,7 @@ const SellerDetailCard = ({ productDetails, setProductDetails }) => {
             productDetails?.user?.mobile && (
               <Link
                 href={`tel:${productDetails?.user?.mobile}`}
-                className="bg-[#000] text-white p-4 rounded-md flex items-center gap-2 text-base font-medium justify-center whitespace-nowrap [flex:1_1_47%]"
+                className="bg-[#000] text-white p-4 rounded-md flex items-center gap-2 text-base font-medium justify-center whitespace-nowrap [flex:1_1_47%] btn-trust"
               >
                 <BiPhoneCall size={21} />
                 <span>{t("call")}</span>
@@ -169,15 +178,30 @@ const SellerDetailCard = ({ productDetails, setProductDetails }) => {
           {isAllowedToMakeOffer && (
             <button
               onClick={handleMakeOffer}
-              className="bg-primary text-white p-4 rounded-md flex items-center gap-2 text-base font-medium justify-center whitespace-nowrap [flex:1_1_47%]"
+              className="bg-primary text-white p-4 rounded-md flex items-center gap-2 text-base font-medium justify-center whitespace-nowrap [flex:1_1_47%] btn-trust"
             >
               <Gift size={21} />
               {t("makeOffer")}
             </button>
           )}
+          {/* Inspection & Warranty Button - Core Feature */}
+          {!isJobCategory && productDetails?.price > 0 && (
+            <button
+              onClick={handleInspectionWarranty}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 rounded-md flex items-center gap-2 text-base font-medium justify-center whitespace-nowrap [flex:1_1_100%] btn-trust trust-glow-hover animate-fadeInUp"
+            >
+              <ShieldCheck size={21} />
+              <span>Inspection & 5-Day Warranty</span>
+            </button>
+          )}
+          {!isJobCategory && productDetails?.price > 0 && (
+            <p className="text-xs text-muted-foreground text-center w-full -mt-2 animate-fadeIn">
+              Buy safely with professional inspection & 5-day warranty
+            </p>
+          )}
           {isJobCategory && (
             <button
-              className={`text-white p-4 rounded-md flex items-center gap-2 text-base font-medium justify-center whitespace-nowrap [flex:1_1_47%] ${
+              className={`text-white p-4 rounded-md flex items-center gap-2 text-base font-medium justify-center whitespace-nowrap [flex:1_1_47%] btn-trust ${
                 isApplied ? "bg-primary" : "bg-black"
               }`}
               disabled={isApplied}
