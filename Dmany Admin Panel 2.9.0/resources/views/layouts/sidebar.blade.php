@@ -145,6 +145,44 @@
                         </li>
                     @endcanany
                 @endcanany
+
+                {{-- Inspection & Warranty Module --}}
+                @canany(['inspection-order-list','inspection-order-view','inspection-order-update','inspection-report-update','warranty-list','warranty-claim-list','warranty-claim-view','warranty-claim-update','settings-update'])
+                    <div class="sidebar-new-title">{{ __('Inspection & Warranty') }}</div>
+                    @can('settings-update')
+                        <li class="sidebar-item">
+                            <a href="{{ route('inspection-warranty.settings.index') }}" class='sidebar-link'>
+                                <i class="bi bi-gear-wide-connected"></i>
+                                <span class="menu-item">{{ __('Inspection Settings') }}</span>
+                            </a>
+                        </li>
+                    @endcan
+                    @canany(['inspection-order-list','inspection-order-view','inspection-order-update'])
+                        <li class="sidebar-item">
+                            <a href="{{ route('inspection-warranty.orders.index') }}" class='sidebar-link'>
+                                <i class="bi bi-clipboard-check"></i>
+                                <span class="menu-item">{{ __('Inspection Orders') }}</span>
+                            </a>
+                        </li>
+                    @endcanany
+                    @can('warranty-list')
+                        <li class="sidebar-item">
+                            <a href="{{ route('inspection-warranty.warranties.index') }}" class='sidebar-link'>
+                                <i class="bi bi-shield-check"></i>
+                                <span class="menu-item">{{ __('Warranty Management') }}</span>
+                            </a>
+                        </li>
+                    @endcan
+                    @canany(['warranty-claim-list','warranty-claim-view','warranty-claim-update'])
+                        <li class="sidebar-item">
+                            <a href="{{ route('inspection-warranty.claims.index') }}" class='sidebar-link'>
+                                <i class="bi bi-exclamation-triangle"></i>
+                                <span class="menu-item">{{ __('Warranty Claims') }}</span>
+                            </a>
+                        </li>
+                    @endcanany
+                @endcanany
+
                 @canany(['slider-list','slider-create','slider-update','slider-delete','feature-section-list','feature-section-create','feature-section-update','feature-section-delete'])
                     <div class="sidebar-new-title">{{ __('Home Screen Management') }}</div>
                     @canany(['slider-list','slider-create','slider-update','slider-delete'])

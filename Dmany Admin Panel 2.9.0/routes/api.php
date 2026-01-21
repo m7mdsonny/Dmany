@@ -68,6 +68,13 @@ Route::group(['middleware' => ['auth:sanctum']], static function () {
     Route::get('my-job-applications', [ApiController::class, 'myJobApplications']);
     Route::post('update-job-applications-status', [ApiController::class, 'updateJobStatus']);
      Route::post('logout', [ApiController::class, 'logout']);
+
+    /* Inspection & Warranty Module */
+    Route::get('get-inspection-config', [ApiController::class, 'getInspectionConfig']);
+    Route::get('get-inspection-order', [ApiController::class, 'getInspectionOrder']);
+    Route::post('create-inspection-order', [ApiController::class, 'createInspectionOrder']);
+    Route::get('get-warranty-claims', [ApiController::class, 'getWarrantyClaims']);
+    Route::post('create-warranty-claim', [ApiController::class, 'createWarrantyClaim']);
 });
 
 
@@ -105,3 +112,6 @@ Route::get('get-categories-slug', [ApiController::class, 'getCategoriesSlug']);
 Route::get('get-blogs-slug', [ApiController::class, 'getBlogsSlug']);
 Route::get('get-featured-section-slug', [ApiController::class, 'getFeatureSectionSlug']);
 Route::get('get-seller-slug', [ApiController::class, 'getSellerSlug']);
+
+/* Inspection & Warranty Public Endpoints */
+Route::get('get-inspection-config', [ApiController::class, 'getInspectionConfig']);

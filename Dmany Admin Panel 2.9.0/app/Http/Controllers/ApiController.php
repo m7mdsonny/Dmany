@@ -42,6 +42,11 @@ use App\Models\UserReports;
 use App\Models\VerificationField;
 use App\Models\VerificationFieldValue;
 use App\Models\VerificationRequest;
+use App\Models\InspectionConfiguration;
+use App\Models\InspectionOrder;
+use App\Models\InspectionReport;
+use App\Models\WarrantyClaim;
+use App\Models\WarrantyClaimImage;
 use App\Services\CachingService;
 use App\Services\FileService;
 use App\Services\HelperService;
@@ -4403,6 +4408,299 @@ class ApiController extends Controller
             return ResponseService::successResponse(__('Active Seller fetched successfully.'), $sellers);
         } catch (Throwable $th) {
             ResponseService::logErrorResponse($th, 'API Controller -> getCategoriesSlug');
+            ResponseService::errorResponse();
+        }
+    }
+
+    /**
+     * 7️⃣ API Endpoints for Frontend/Mobile Integration
+     * Get Inspection Configuration
+     */
+    public function getInspectionConfig(Request $request)
+    {
+        try {
+            $config = InspectionConfiguration::getConfiguration();
+            
+            return ResponseService::successResponse(__('Inspection configuration fetched successfully.'), [
+                'fee_percentage' => (float) $config->fee_percentage,
+                'warranty_duration' => (int) $config->warranty_duration,
+                'service_description' => $config->service_description,
+                'workflow_steps' => $config->workflow_steps,
+                'terms_conditions' => $config->terms_conditions,
+                'covered_items' => $config->covered_items ?? [],
+                'excluded_items' => $config->excluded_items ?? [],
+                'is_active' => (bool) $config->is_active,
+            ]);
+        } catch (Throwable $th) {
+            ResponseService::logErrorResponse($th, 'API Controller -> getInspectionConfig');
+            ResponseService::errorResponse();
+        }
+    }
+
+    /**
+     * Get Inspection Order
+     */
+    public function getInspectionOrder(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'item_id' => 'required_without:order_id|exists:items,id',
+                'order_id' => 'required_without:item_id|exists:inspection_orders,id',
+            ]);
+
+            if ($validator->fails()) {
+                return ResponseService::validationErrorResponse($validator->errors());
+            }
+
+            $query = InspectionOrder::with([
+                'item:id,name,image,price',
+                'buyer:id,name,profile,email,mobile',
+                'seller:id,name,profile',
+                'assignedTechnician:id,name',
+                'inspectionReport.images',
+            ]);
+
+            if ($request->order_id) {
+                $order = $query->find($request->order_id);
+            } else {
+                // Get latest order for this item
+                $order = $query->where('item_id', $request->item_id)
+                    ->where('buyer_id', Auth::id())
+                    ->latest()
+                    ->first();
+            }
+
+            if (!$order) {
+                return ResponseService::errorResponse(__('Inspection order not found.'));
+            }
+
+            return ResponseService::successResponse(__('Inspection order fetched successfully.'), [
+                'id' => $order->id,
+                'order_number' => $order->order_number,
+                'item_id' => $order->item_id,
+                'buyer_id' => $order->buyer_id,
+                'seller_id' => $order->seller_id,
+                'device_price' => (float) $order->device_price,
+                'inspection_fee' => (float) $order->inspection_fee,
+                'total_amount' => (float) $order->total_amount,
+                'status' => $order->status,
+                'assigned_technician' => $order->assignedTechnician ? [
+                    'id' => $order->assignedTechnician->id,
+                    'name' => $order->assignedTechnician->name,
+                ] : null,
+                'device_received_at' => $order->device_received_at?->toISOString(),
+                'inspection_date' => $order->inspection_date?->toISOString(),
+                'delivery_date' => $order->delivery_date?->toISOString(),
+                'warranty_start_date' => $order->warranty_start_date?->format('Y-m-d'),
+                'warranty_end_date' => $order->warranty_end_date?->format('Y-m-d'),
+                'warranty_duration' => (int) $order->warranty_duration,
+                'inspection_report' => $order->inspectionReport ? [
+                    'condition_score' => $order->inspectionReport->condition_score,
+                    'grade' => $order->inspectionReport->grade,
+                    'battery_health' => $order->inspectionReport->battery_health,
+                    'technician_notes' => $order->inspectionReport->technician_notes,
+                    'final_decision' => $order->inspectionReport->final_decision,
+                    'report_url' => $order->inspectionReport->report_url,
+                    'images' => $order->inspectionReport->images->map(function($img) {
+                        return [
+                            'id' => $img->id,
+                            'url' => $img->image_url,
+                            'type' => $img->image_type,
+                            'caption' => $img->caption,
+                        ];
+                    })->toArray(),
+                ] : null,
+                'created_at' => $order->created_at->toISOString(),
+            ]);
+        } catch (Throwable $th) {
+            ResponseService::logErrorResponse($th, 'API Controller -> getInspectionOrder');
+            ResponseService::errorResponse();
+        }
+    }
+
+    /**
+     * Create Inspection Order
+     */
+    public function createInspectionOrder(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'item_id' => 'required|exists:items,id',
+            ]);
+
+            if ($validator->fails()) {
+                return ResponseService::validationErrorResponse($validator->errors());
+            }
+
+            $item = Item::findOrFail($request->item_id);
+            
+            // Check if service is active
+            $config = InspectionConfiguration::getConfiguration();
+            if (!$config->is_active) {
+                return ResponseService::errorResponse(__('Inspection & Warranty service is currently disabled.'));
+            }
+
+            // Check if order already exists for this item and buyer
+            $existingOrder = InspectionOrder::where('item_id', $request->item_id)
+                ->where('buyer_id', Auth::id())
+                ->whereIn('status', ['pending', 'device_received', 'under_inspection', 'passed', 'delivered', 'warranty_active'])
+                ->first();
+
+            if ($existingOrder) {
+                return ResponseService::errorResponse(__('An active inspection order already exists for this item.'));
+            }
+
+            // Calculate fees
+            $devicePrice = (float) ($item->price ?? 0);
+            if ($devicePrice <= 0) {
+                return ResponseService::errorResponse(__('Item price must be greater than zero.'));
+            }
+
+            $inspectionFee = $config->calculateInspectionFee($devicePrice);
+            $totalAmount = $config->calculateTotalAmount($devicePrice);
+
+            DB::beginTransaction();
+
+            $order = InspectionOrder::create([
+                'order_number' => InspectionOrder::generateOrderNumber(),
+                'item_id' => $request->item_id,
+                'buyer_id' => Auth::id(),
+                'seller_id' => $item->user_id,
+                'device_price' => $devicePrice,
+                'inspection_fee' => $inspectionFee,
+                'total_amount' => $totalAmount,
+                'status' => 'pending',
+                'warranty_duration' => $config->warranty_duration,
+            ]);
+
+            // Log action
+            \App\Models\InspectionAuditLog::logAction(
+                $order->id,
+                Auth::id(),
+                'order_created',
+                'Created new inspection order',
+                null,
+                ['order_number' => $order->order_number]
+            );
+
+            DB::commit();
+
+            return ResponseService::successResponse(__('Inspection order created successfully.'), [
+                'id' => $order->id,
+                'order_number' => $order->order_number,
+                'device_price' => (float) $order->device_price,
+                'inspection_fee' => (float) $order->inspection_fee,
+                'total_amount' => (float) $order->total_amount,
+                'status' => $order->status,
+            ]);
+        } catch (Throwable $th) {
+            DB::rollBack();
+            ResponseService::logErrorResponse($th, 'API Controller -> createInspectionOrder');
+            ResponseService::errorResponse();
+        }
+    }
+
+    /**
+     * Get Warranty Claims
+     */
+    public function getWarrantyClaims(Request $request)
+    {
+        try {
+            $offset = $request->input('offset', 0);
+            $limit = $request->input('limit', 20);
+
+            $claims = WarrantyClaim::with([
+                'inspectionOrder.item:id,name,image',
+                'inspectionOrder.inspectionReport:id,inspection_order_id,condition_score,grade'
+            ])
+            ->where('user_id', Auth::id())
+            ->orderBy('created_at', 'DESC')
+            ->offset($offset)
+            ->limit($limit)
+            ->get();
+
+            return ResponseService::successResponse(__('Warranty claims fetched successfully.'), [
+                'claims' => $claims->map(function($claim) {
+                    return [
+                        'id' => $claim->id,
+                        'claim_number' => $claim->claim_number,
+                        'inspection_order_id' => $claim->inspection_order_id,
+                        'description' => $claim->description,
+                        'status' => $claim->status,
+                        'admin_response' => $claim->admin_response,
+                        'decision_outcome' => $claim->decision_outcome,
+                        'refund_amount' => $claim->refund_amount ? (float) $claim->refund_amount : null,
+                        'resolved_at' => $claim->resolved_at?->toISOString(),
+                        'created_at' => $claim->created_at->toISOString(),
+                    ];
+                })->toArray(),
+            ]);
+        } catch (Throwable $th) {
+            ResponseService::logErrorResponse($th, 'API Controller -> getWarrantyClaims');
+            ResponseService::errorResponse();
+        }
+    }
+
+    /**
+     * Create Warranty Claim
+     */
+    public function createWarrantyClaim(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'order_id' => 'required|exists:inspection_orders,id',
+                'description' => 'required|string|min:10',
+                'images.*' => 'nullable|image|max:5120',
+            ]);
+
+            if ($validator->fails()) {
+                return ResponseService::validationErrorResponse($validator->errors());
+            }
+
+            $order = InspectionOrder::findOrFail($request->order_id);
+
+            // Verify order belongs to user
+            if ($order->buyer_id !== Auth::id()) {
+                return ResponseService::errorResponse(__('Unauthorized.'));
+            }
+
+            // Check if warranty is active
+            if ($order->status !== 'warranty_active') {
+                return ResponseService::errorResponse(__('Warranty is not active for this order.'));
+            }
+
+            DB::beginTransaction();
+
+            $claim = WarrantyClaim::create([
+                'inspection_order_id' => $request->order_id,
+                'user_id' => Auth::id(),
+                'claim_number' => WarrantyClaim::generateClaimNumber(),
+                'description' => $request->description,
+                'status' => 'pending',
+            ]);
+
+            // Handle image uploads
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $image) {
+                    $path = $image->store("warranty-claims/{$claim->id}", 'public');
+                    
+                    WarrantyClaimImage::create([
+                        'warranty_claim_id' => $claim->id,
+                        'image_url' => Storage::url($path),
+                        'sort_order' => 0,
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            return ResponseService::successResponse(__('Warranty claim created successfully.'), [
+                'id' => $claim->id,
+                'claim_number' => $claim->claim_number,
+            ]);
+        } catch (Throwable $th) {
+            DB::rollBack();
+            ResponseService::logErrorResponse($th, 'API Controller -> createWarrantyClaim');
             ResponseService::errorResponse();
         }
     }

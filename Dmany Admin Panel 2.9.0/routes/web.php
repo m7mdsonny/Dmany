@@ -25,6 +25,7 @@ use App\Http\Controllers\SystemUpdateController;
 use App\Http\Controllers\TipController;
 use App\Http\Controllers\UserVerificationController;
 use App\Http\Controllers\WebhookController;
+use App\Http\Controllers\InspectionWarrantyController;
 use App\Models\UserVerification;
 use App\Services\CachingService;
 use Illuminate\Support\Facades\Artisan;
@@ -231,6 +232,34 @@ Route::group(['middleware' => ['auth', 'language']], static function () {
     Route::resource('seller-review', SellerController::class);
     Route::get('review-report', [SellerController::class, 'showReports'])->name('seller-review.report');
 
+    /*** Inspection & Warranty Module : START ***/
+    Route::group(['prefix' => 'inspection-warranty'], static function () {
+        // 2️⃣ Global Settings
+        Route::get('settings', [InspectionWarrantyController::class, 'settingsIndex'])->name('inspection-warranty.settings.index');
+        Route::post('settings/update', [InspectionWarrantyController::class, 'settingsUpdate'])->name('inspection-warranty.settings.update');
+        
+        // 3️⃣ Inspection Orders Management
+        Route::get('orders', [InspectionWarrantyController::class, 'ordersIndex'])->name('inspection-warranty.orders.index');
+        Route::get('orders/data', [InspectionWarrantyController::class, 'ordersData'])->name('inspection-warranty.orders.data');
+        Route::get('orders/{id}', [InspectionWarrantyController::class, 'orderDetail'])->name('inspection-warranty.orders.detail');
+        Route::post('orders/{id}/assign-technician', [InspectionWarrantyController::class, 'assignTechnician'])->name('inspection-warranty.orders.assign-technician');
+        Route::post('orders/{id}/update-status', [InspectionWarrantyController::class, 'updateStatus'])->name('inspection-warranty.orders.update-status');
+        
+        // 4️⃣ Inspection Report Management
+        Route::post('orders/{id}/report', [InspectionWarrantyController::class, 'submitReport'])->name('inspection-warranty.report.submit');
+        Route::delete('reports/{reportId}/images/{imageId}', [InspectionWarrantyController::class, 'deleteReportImage'])->name('inspection-warranty.report.delete-image');
+        
+        // 5️⃣ Warranty Management
+        Route::get('warranties', [InspectionWarrantyController::class, 'warrantiesIndex'])->name('inspection-warranty.warranties.index');
+        Route::get('warranties/data', [InspectionWarrantyController::class, 'warrantiesData'])->name('inspection-warranty.warranties.data');
+        
+        // 6️⃣ Warranty Claims & Disputes
+        Route::get('claims', [InspectionWarrantyController::class, 'claimsIndex'])->name('inspection-warranty.claims.index');
+        Route::get('claims/data', [InspectionWarrantyController::class, 'claimsData'])->name('inspection-warranty.claims.data');
+        Route::get('claims/{id}', [InspectionWarrantyController::class, 'claimDetail'])->name('inspection-warranty.claims.detail');
+        Route::post('claims/{id}/resolve', [InspectionWarrantyController::class, 'resolveClaim'])->name('inspection-warranty.claims.resolve');
+    });
+    /*** Inspection & Warranty Module : END ***/
 
     /*** Setting Module : START ***/
     Route::group(['prefix' => 'settings'], static function () {
